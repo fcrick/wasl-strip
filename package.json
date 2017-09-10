@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "assemblyscript": "^0.2.0"
+  },
+  "name": "somethignorrather",
+  "version": "1.0.0"
+}
