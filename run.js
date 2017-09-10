@@ -8,7 +8,7 @@ var columns = [
   'Francis',
 ]
 
-var doc = 'Alex,"Francis",Michael\n1,2,3\n'
+var doc = 'Alex,"Francis",Michael\n"1,1",2,3\n'
 console.log('length is ' + doc.length)
 
 // console.log('test')

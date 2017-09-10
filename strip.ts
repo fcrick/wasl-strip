@@ -123,7 +123,6 @@ export function strip(length: usize): void {
             if (char == comma || char == newline) {
                 if (inQuote) {
                     quoteValue = true
-                    continue
                 } else {
                     // current value is over
                     onEndValue(cur)
