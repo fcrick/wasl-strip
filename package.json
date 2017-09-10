@@ -2,6 +2,9 @@
   "devDependencies": {
     "assemblyscript": "^0.2.0"
   },
-  "name": "somethignorrather",
-  "version": "1.0.0"
+  "name": "wasl-strip-csv",
+  "version": "1.0.0",
+  "dependencies": {
+    "assemblyscript-loader": "^0.2.0"
+  }
 }
