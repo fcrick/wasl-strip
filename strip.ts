@@ -44,6 +44,9 @@ let valueEnd: usize = 0
 // we write the output back into the same buffer and use this offset
 let outOffset: usize = 0
 
+// which column we're working on in the current line
+let column: u8 = 0
+
 function checkIncluded(): void {
     if (inHeader) {
         // as we read in the header, check if we keep each column
@@ -98,8 +101,6 @@ function onEndValue(position: usize): void {
 
 export function strip(length: usize): void {
     
-    // which column we're working on in the current line
-    let column: u8 = 0
 
     for (let cur: usize = 0; cur < length; cur++) {
         let char: u8 = load<u8>(cur)
@@ -129,7 +130,7 @@ export function strip(length: usize): void {
 
                     if (char == comma) {
                         // we're in the next column now
-                        column++
+                        column += 1
                         columnBit <<= 1
                     } else { // if (char == newline)
                         // start back at the first column
