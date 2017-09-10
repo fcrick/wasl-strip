@@ -69,7 +69,6 @@ export function strip(length: usize): void {
 
     for (let cur: usize = 0; cur < length; cur++) {
         let char: u8 = load<u8>(cur)
-        js$debug(char)
         if (char == quote) {
             if (inQuote) {
                 inQuote = false
