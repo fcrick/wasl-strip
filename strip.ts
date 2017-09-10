@@ -41,6 +41,9 @@ let valueStart: usize = 0
 // end offset of value we're reading right now
 let valueEnd: usize = 0
 
+// we write the output back into the same buffer and use this offset
+let outOffset: usize = 0
+
 function checkIncluded(): void {
     if (inHeader) {
         // as we read in the header, check if we keep each column
@@ -60,9 +63,40 @@ function stripQuotes(): void {
     }
 }
 
+function writeValue(): void {
+    if (columnsIncluded & columnBit) {
+        // write out the character before the value, if any
+        if (commaSkipped) {
+            store<u8>(outOffset, comma)
+            outOffset += 1
+        } else {
+            if (row != 0) {
+                store<u8>(outOffset, newline)
+                outOffset += 1
+            }
+            commaSkipped = true
+        }
+
+        // write this column to the output before continuing
+        while (valueStart < valueEnd) {
+            store<u8>(outOffset, load<u8>(valueStart))
+            outOffset += 1
+            valueStart += 1
+        }
+    }
+}
+
+function onEndValue(position: usize): void {
+    valueEnd = position
+    checkIncluded()
+    stripQuotes()
+    writeValue()
+    valueStart = position + 1
+    quoteValue = false
+    valueQuoted = false
+}
+
 export function strip(length: usize): void {
-    // we write the output back into the same buffer and use this offset
-    let outOffset: usize = 0
     
     // which column we're working on in the current line
     let column: u8 = 0
@@ -84,110 +118,34 @@ export function strip(length: usize): void {
                 // otherwise, just ignore the quote - this might merit an error
                 // but let's ignore this quote for now
             }
-        } else if (char == comma) {
-            endQuote = false
-            if (inQuote) {
-                quoteValue = true
-            } else {
-                // current value is over
-                valueEnd = cur
-                checkIncluded()
-                stripQuotes()
-
-                if (columnsIncluded & columnBit) {
-                    // write out the character before the value, if any
-                    if (commaSkipped) {
-                        store<u8>(outOffset++, comma)
-                    } else {
-                        if (row != 0) {
-                            store<u8>(outOffset++, newline)
-                        }
-                        commaSkipped = true
-                    }
-
-                    // write this column to the output before continuing
-                    while (valueStart < valueEnd) {
-                        store<u8>(outOffset++, load<u8>(valueStart))
-                        valueStart += 1
-                    }
-
-                }
-
-                // we're in the next column now
-                column++
-                columnBit <<= 1
-                
-                valueStart = cur + 1
-                quoteValue = false
-                valueQuoted = false
-            }
-        } else if (char == newline) {
-            endQuote = false
-            if (inQuote) {
-                quoteValue = true
-            } else {
-                // current value is over
-                valueEnd = cur
-                checkIncluded()
-                inHeader = false
-                stripQuotes()
-
-                if (columnsIncluded & columnBit) {
-                    // write out the character before the value, if any
-                    if (commaSkipped) {
-                        store<u8>(outOffset++, comma)
-                    } else {
-                        if (row != 0) {
-                            store<u8>(outOffset++, newline)
-                        }
-                        commaSkipped = true
-                    }
-
-                    // write this column to the output before continuing
-                    while (valueStart < valueEnd) {
-                        store<u8>(outOffset++, load<u8>(valueStart))
-                        valueStart += 1
-                    }
-                }
-
-                // start back at the first column
-                column = 0
-                columnBit = 1
-
-                valueStart = cur + 1
-                quoteValue = false
-                valueQuoted = false
-                row += 1
-                commaSkipped = false
-            }
         } else {
             endQuote = false
+            if (char == comma || char == newline) {
+                if (inQuote) {
+                    quoteValue = true
+                    continue
+                } else {
+                    // current value is over
+                    onEndValue(cur)
+
+                    if (char == comma) {
+                        // we're in the next column now
+                        column++
+                        columnBit <<= 1
+                    } else { // if (char == newline)
+                        // start back at the first column
+                        inHeader = false
+                        column = 0
+                        columnBit = 1
+                        row += 1
+                        commaSkipped = false
+                    }
+                }
+            }
         }
     }
 
-    valueEnd = length
-    checkIncluded()
-    stripQuotes()
-
-    if (columnsIncluded & columnBit) {
-        // write out the character before the value, if any
-        if (commaSkipped) {
-            store<u8>(outOffset++, comma)
-        } else {
-            if (row != 0) {
-                store<u8>(outOffset++, newline)
-            }
-            commaSkipped = true
-        }
-
-        // write this column to the output before continuing
-        while (valueStart < valueEnd) {
-            store<u8>(outOffset++, load<u8>(valueStart))
-            valueStart += 1
-        }
-
-        store<u8>(outOffset++, newline)
-    }
+    onEndValue(length)
 
     js$done(outOffset)
 }
