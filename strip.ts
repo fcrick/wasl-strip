@@ -1,6 +1,11 @@
-declare function js$included(start: usize, end: usize): i32
-declare function js$debug(num: usize): void
-declare function js$done(length: usize): void
+const enum Token {
+    ZERO = 0x00
+}
+
+namespace js {
+    export declare function included(start: usize, end: usize): i32
+    export declare function done(outOffset: usize): void
+}
 
 // we ignore everything except these
 const comma: u8 = 44
@@ -51,7 +56,7 @@ function checkIncluded(): void {
     if (inHeader) {
         // as we read in the header, check if we keep each column
         // for now, force the callee to deal with quotes and escaping and the like
-        let included: i32 = js$included(valueStart, valueEnd)
+        let included: i32 = js.included(valueStart, valueEnd)
         if (included >= 0) {
             columnsIncluded |= columnBit
         }
@@ -67,7 +72,7 @@ function stripQuotes(): void {
 }
 
 function writeValue(): void {
-    if (columnsIncluded & columnBit) {
+    if ((columnsIncluded & columnBit) > 0) {
         // write out the character before the value, if any
         if (commaSkipped) {
             store<u8>(outOffset, comma)
@@ -147,5 +152,5 @@ export function strip(length: usize): void {
 
     onEndValue(length)
 
-    js$done(outOffset)
+    js.done(outOffset)
 }

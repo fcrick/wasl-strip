@@ -16,7 +16,7 @@ console.log('length is ' + doc.length)
 
 var onDone, onIncluded
 
-load("./strip.wasm", {
+load("./strip.optimized.wasm", {
   imports: {
     js: {
       included: (start, end) => onIncluded(start, end),
@@ -43,4 +43,6 @@ load("./strip.wasm", {
 
   Buffer.from(module.memory.buffer, 0, doc.length).write(doc)
   console.log(module.exports.strip(doc.length))
+}).catch(e => {
+  throw e
 });

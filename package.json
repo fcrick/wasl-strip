@@ -1,9 +1,14 @@
 {
   "devDependencies": {
-    "assemblyscript": "^0.2.0"
+    "assemblyscript": "0.3.0"
   },
   "name": "wasl-strip-csv",
   "version": "1.0.0",
+  "scripts": {
+    "build": "npm run build:untouched && npm run build:optimized",
+    "build:untouched": "asc strip.ts -b strip.untouched.wasm -t strip.untouched.wast --validate",
+    "build:optimized": "asc -O strip.ts -b strip.optimized.wasm -t strip.optimized.wast --validate"
+  },
   "dependencies": {
     "assemblyscript-loader": "^0.2.0"
   }
